@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Molecule Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.0.5/3Dmol.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #viewer {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="viewer"></div>
+    <script>
+        // Buat viewer menggunakan pustaka 3Dmol.js
+        const viewer = $3Dmol.createViewer("viewer", {
+            backgroundColor: "white",
+            width: window.innerWidth,
+            height: window.innerHeight
+        });
+
+        // Fungsi untuk memuat molekul dari API PubChem
+        async function loadMoleculeFromPubChem(moleculeName) {
+            console.log("Fetching data for molecule:", moleculeName);
+            
+            let baseUrl = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/";
+            let moleculePart = moleculeName;
+            let suffix = "/record/SDF";
+            
+            const url = baseUrl + moleculePart + suffix;
+            console.log("Generated URL:", url);
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Molekul tidak ditemukan.");
+                const sdfData = await response.text();
+                console.log("SDF Data:", sdfData);
+
+                if (!sdfData || sdfData.trim() === "") {
+                    alert("No SDF data found.");
+                    return;
+                }
+
+                // Hapus model lama dan tambahkan model baru dengan style dipertebal
+                viewer.removeAllModels();
+                viewer.addModel(sdfData, "sdf");
+                
+                // Menambah style untuk mempertebal tampilan molekul
+                viewer.setStyle({}, {
+                    stick: {
+                        radius: 0.3,   // Ukuran stick
+                        linewidth: 5   // Ketebalan garis
+                    },
+                    sphere: {
+                        radius: 0.4    // Ukuran sphere untuk atom
+                    }
+                });
+                
+                viewer.zoomTo();  // Fokuskan pada molekul
+                viewer.render();   // Render viewer
+                viewer.animate();  // Memulai animasi jika diperlukan
+                console.log("Molecule successfully loaded and rendered.");
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Molekul tidak ditemukan. Periksa nama molekul.");
+            }
+        }
+
+        // Muat molekul default (contoh: water)
+        loadMoleculeFromPubChem("sulphuric acid");
+    </script>
+</body>
+</html>
