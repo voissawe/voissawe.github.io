@@ -24,28 +24,54 @@
 <body>
     <div id="viewer"></div>
     <script>
-        const viewer = $3Dmol.createViewer("viewer", { backgroundColor: "white" });
+        const viewer = $3Dmol.createViewer("viewer", {
+            backgroundColor: "white",
+            width: window.innerWidth,
+            height: window.innerHeight
+        });
 
+        // Fungsi untuk memuat molekul dari PubChem
         async function loadMoleculeFromPubChem(moleculeName) {
-            let url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${moleculeName}/record/SDF`;
+            console.log("Fetching data for molecule:", moleculeName);
+
+            const baseUrl = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/";
+            const url = `${baseUrl}${moleculeName}/record/SDF`;
+
             try {
                 const response = await fetch(url);
+                if (!response.ok) throw new Error("Molecule not found.");
+
                 const sdfData = await response.text();
+                if (!sdfData || sdfData.trim() === "") {
+                    alert("Error: No data available for the specified molecule.");
+                    return;
+                }
+
                 viewer.removeAllModels();
                 viewer.addModel(sdfData, "sdf");
-                viewer.setStyle({}, { stick: { radius: 0.1 }, sphere: { radius: 0.2 } });
+                viewer.setStyle({}, {
+                    stick: { radius: 0.1 },
+                    sphere: { radius: 0.2 }
+                });
                 viewer.zoomTo();
                 viewer.render();
             } catch (error) {
-                alert("Molecule not found.");
+                console.error("Error fetching molecule data:", error.message);
+                alert("Molecule not found. Please check the molecule name and try again.");
             }
         }
 
+        // Fungsi untuk mengubah ukuran molekul secara dinamis
         function setMoleculeStyle(stickRadius, sphereRadius) {
-            viewer.setStyle({}, { stick: { radius: stickRadius }, sphere: { radius: sphereRadius } });
+            viewer.setStyle({}, {
+                stick: { radius: stickRadius },
+                sphere: { radius: sphereRadius }
+            });
             viewer.render();
+            console.log(`Style updated: stick radius = ${stickRadius}, sphere radius = ${sphereRadius}`);
         }
 
+        // Muat molekul default (contoh: sulfuric acid)
         loadMoleculeFromPubChem("sulphuric acid");
     </script>
 </body>
