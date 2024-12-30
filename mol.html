@@ -11,18 +11,29 @@
             padding: 0;
             width: 100%;
             height: 100%;
+            font-family: Arial, sans-serif;
         }
         #viewer {
             width: 100%;
-            height: 100%;
+            height: 80%;
             position: absolute;
             top: 0;
             left: 0;
+        }
+        #error-message {
+            position: absolute;
+            top: 85%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            color: red;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <div id="viewer"></div>
+    <div id="error-message"></div> <!-- Tempat untuk menampilkan pesan error -->
     <script>
         const viewer = $3Dmol.createViewer("viewer", {
             backgroundColor: "white",
@@ -43,7 +54,7 @@
 
                 const sdfData = await response.text();
                 if (!sdfData || sdfData.trim() === "") {
-                    alert("Error: No data available for the specified molecule.");
+                    document.getElementById("error-message").textContent = "DATA BELUM DIMASUKAN";
                     return;
                 }
 
@@ -55,24 +66,17 @@
                 });
                 viewer.zoomTo();
                 viewer.render();
+
+                // Reset error message when data is found
+                document.getElementById("error-message").textContent = "";
             } catch (error) {
                 console.error("Error fetching molecule data:", error.message);
-                alert("Molecule not found. Please check the molecule name and try again.");
+                document.getElementById("error-message").textContent = "DATA BELUM DIMASUKAN";
             }
         }
 
-        // Fungsi untuk mengubah ukuran molekul secara dinamis
-        function setMoleculeStyle(stickRadius, sphereRadius) {
-            viewer.setStyle({}, {
-                stick: { radius: stickRadius },
-                sphere: { radius: sphereRadius }
-            });
-            viewer.render();
-            console.log(`Style updated: stick radius = ${stickRadius}, sphere radius = ${sphereRadius}`);
-        }
-
         // Muat molekul default (contoh: sulfuric acid)
-        loadMoleculeFromPubChem("sulphuric acid");
+        loadMoleculeFromPubChem("");
     </script>
 </body>
 </html>
