@@ -14,7 +14,7 @@
         }
         #viewer {
             width: 100%;
-            height: 80%;
+            height: 70%;
             position: absolute;
             top: 0;
             left: 0;
@@ -30,11 +30,28 @@
         #shareButton:hover {
             background-color: #45a049;
         }
+        .label {
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+            color: black;
+            background-color: #f2f2f2;
+            border: 1px solid #ccc;
+            width: 100%;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
     <div id="viewer"></div>
     <button id="shareButton">Share Molecule Info</button>
+    
+    <!-- Labels to display molecule info -->
+    <div id="nameLabel" class="label"></div>
+    <div id="cidLabel" class="label"></div>
+    <div id="formulaLabel" class="label"></div>
+    <div id="massLabel" class="label"></div>
+    
     <script>
         const viewer = $3Dmol.createViewer("viewer", {
             backgroundColor: "white",
@@ -80,12 +97,11 @@
                 console.log("Formula:", formula);
                 console.log("Molecular Weight:", mass);
 
-                // Menampilkan CID, Formula, dan Massa pada halaman
-                document.body.innerHTML += `
-                    <p><strong>CID:</strong> ${cid}</p>
-                    <p><strong>Formula:</strong> ${formula}</p>
-                    <p><strong>Molecular Weight:</strong> ${mass} g/mol</p>
-                `;
+                // Menampilkan hasil di label terpisah
+                document.getElementById("nameLabel").innerHTML = `<strong>Molecule:</strong> ${moleculeInfo.name}`;
+                document.getElementById("cidLabel").innerHTML = `<strong>CID:</strong> ${moleculeInfo.cid}`;
+                document.getElementById("formulaLabel").innerHTML = `<strong>Formula:</strong> ${moleculeInfo.formula}`;
+                document.getElementById("massLabel").innerHTML = `<strong>Molecular Weight:</strong> ${moleculeInfo.mass} g/mol`;
 
                 // Gunakan CID untuk mendapatkan struktur molekul dalam format SDF
                 const sdfUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/record/SDF`;
