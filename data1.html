@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Molecule Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.0.5/3Dmol.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #viewer {
+            width: 100%;
+            height: 80%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #shareButton {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #shareButton:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="viewer"></div>
+    <button id="shareButton">Share Molecule Info</button>
+    <script>
+        const viewer = $3Dmol.createViewer("viewer", {
+            backgroundColor: "white",
+            width: window.innerWidth,
+            height: window.innerHeight
+        });
+
+        // Variabel untuk menyimpan informasi molekul
+        let moleculeInfo = {
+            name: "",
+            cid: "",
+            formula: "",
+            mass: ""
+        };
+
+        // Fungsi untuk memuat molekul dan mengambil CID, Formula, Massa (Molecular Weight)
+        async function loadMoleculeByName(name) {
+            console.log("Fetching molecule data for:", name);
+
+            // Fetch JSON dari PubChem
+            const jsonUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(name)}/record/JSON`;
+            try {
+                const response = await fetch(jsonUrl);
+                if (!response.ok) throw new Error("Molecule not found.");
+
+                const jsonData = await response.json();
+                const compound = jsonData.PC_Compounds[0];
+
+                // Ambil CID, Formula, Massa
+                const cid = compound.id.id.cid;
+                const formula = compound.props.find(prop => prop.urn.label === "Molecular Formula").value.s;
+                const mass = compound.props.find(prop => prop.urn.label === "Molecular Weight").value.f;
+
+                // Simpan informasi molekul
+                moleculeInfo = {
+                    name: name,
+                    cid: cid,
+                    formula: formula,
+                    mass: mass
+                };
+
+                console.log("CID:", cid);
+                console.log("Formula:", formula);
+                console.log("Molecular Weight:", mass);
+
+                // Menampilkan CID, Formula, dan Massa pada halaman
+                document.body.innerHTML += `
+                    <p><strong>CID:</strong> ${cid}</p>
+                    <p><strong>Formula:</strong> ${formula}</p>
+                    <p><strong>Molecular Weight:</strong> ${mass} g/mol</p>
+                `;
+
+                // Gunakan CID untuk mendapatkan struktur molekul dalam format SDF
+                const sdfUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/record/SDF`;
+                const sdfResponse = await fetch(sdfUrl);
+                if (!sdfResponse.ok) throw new Error("Molecule structure not found.");
+
+                const sdfData = await sdfResponse.text();
+
+                // Tampilkan molekul di viewer
+                viewer.removeAllModels();
+                viewer.addModel(sdfData, "sdf");
+                viewer.setStyle({}, { stick: { radius: 0.1 }, sphere: { radius: 0.2 } });
+                viewer.zoomTo();
+                viewer.render();
+                console.log("Molecule loaded successfully.");
+            } catch (error) {
+                console.error("Error:", error.message);
+                alert("Molecule not found. Please check the name and try again.");
+            }
+        }
+
+        // Fungsi untuk membagikan data molekul
+        function shareMoleculeInfo() {
+            const shareData = `Molecule: ${moleculeInfo.name}\nCID: ${moleculeInfo.cid}\nFormula: ${moleculeInfo.formula}\nMolecular Weight: ${moleculeInfo.mass} g/mol`;
+            if (navigator.share) {
+                navigator.share({
+                    title: moleculeInfo.name,
+                    text: shareData,
+                })
+                .then(() => console.log('Data shared successfully'))
+                .catch((error) => console.error('Error sharing:', error));
+            } else {
+                // Fallback for browsers that don't support Web Share API
+                alert('Sharing is not supported in this browser. Copy the following text to share:\n\n' + shareData);
+            }
+        }
+
+        // Event listener untuk tombol Share
+        document.getElementById('shareButton').addEventListener('click', shareMoleculeInfo);
+
+        // Muat molekul default (contoh: aspirin)
+        loadMoleculeByName("aspirin");
+    </script>
+</body>
+</html>
