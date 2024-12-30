@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Molecule Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.0.5/3Dmol.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #viewer {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="viewer"></div>
+    <script>
+        const viewer = $3Dmol.createViewer("viewer", { backgroundColor: "white" });
+
+        async function loadMoleculeFromPubChem(moleculeName) {
+            let url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${moleculeName}/record/SDF`;
+            try {
+                const response = await fetch(url);
+                const sdfData = await response.text();
+                viewer.removeAllModels();
+                viewer.addModel(sdfData, "sdf");
+                viewer.setStyle({}, { stick: { radius: 0.1 }, sphere: { radius: 0.2 } });
+                viewer.zoomTo();
+                viewer.render();
+            } catch (error) {
+                alert("Molecule not found.");
+            }
+        }
+
+        function setMoleculeStyle(stickRadius, sphereRadius) {
+            viewer.setStyle({}, { stick: { radius: stickRadius }, sphere: { radius: sphereRadius } });
+            viewer.render();
+        }
+
+        loadMoleculeFromPubChem("sulphuric acid");
+    </script>
+</body>
+</html>
