@@ -72,9 +72,16 @@
                 })
                 .then(data => {
                     const csvData = Papa.parse(data, { header: true });
-                    console.log("CSV Headers:", csvData.meta.fields);  // Log headers untuk verifikasi
 
-                    // Inisialisasi DataTable dengan tombol ekspor dan filter
+                    // Memformat kolom Timestamp menjadi YYYY-MM-DD
+                    csvData.data.forEach(row => {
+                        if (row.Timestamp) {
+                            const dateParts = row.Timestamp.split(" ")[0].split("/");
+                            const formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`; // Mengubah menjadi YYYY-MM-DD
+                            row.Timestamp = formattedDate;
+                        }
+                    });
+
                     const table = $('#example').DataTable({
                         data: csvData.data,
                         columns: [
