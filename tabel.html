@@ -22,6 +22,10 @@
     <label for="filter-date">Filter Tanggal:</label>
     <input type="date" id="filter-date" />
 
+    <!-- Input untuk filter berdasarkan Absensi Sahitak -->
+    <label for="filter-absensi">Filter Absensi Sahitak:</label>
+    <input type="text" id="filter-absensi" placeholder="Cari Absensi Sahitak..." />
+
     <table id="example" class="display" style="width:100%">
         <thead>
             <tr>
@@ -96,14 +100,25 @@
                         ]
                     });
 
-                    // Pencarian berdasarkan tanggal
+                    // Filter berdasarkan tanggal (Timestamp)
                     $('#filter-date').on('change', function () {
                         const selectedDate = $(this).val();
                         if (selectedDate) {
-                            // Filter data berdasarkan tanggal
+                            // Filter data berdasarkan tanggal pada kolom Timestamp
                             table.column(1).search(selectedDate).draw();
                         } else {
                             table.column(1).search('').draw();  // Reset filter jika tanggal tidak dipilih
+                        }
+                    });
+
+                    // Filter berdasarkan Absensi Sahitak
+                    $('#filter-absensi').on('keyup', function () {
+                        const absensiValue = $(this).val();
+                        if (absensiValue) {
+                            // Filter data berdasarkan Absensi Sahitak
+                            table.column(5).search(absensiValue).draw();
+                        } else {
+                            table.column(5).search('').draw();  // Reset filter jika tidak ada input
                         }
                     });
                 })
@@ -115,4 +130,3 @@
     </script>
 </body>
 </html>
-
