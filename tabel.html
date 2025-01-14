@@ -1,1 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataTables dengan Google Sheets</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.5/css/buttons.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.5/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vfs-fonts/2.0.1/vfs_fonts.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.5/js/buttons.html5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+</head>
+<body>
+    <h1>Data Table Google Sheets</h1>
+
+    <!-- Input untuk filter berdasarkan tanggal -->
+    <label for="filter-date">Filter Tanggal:</label>
+    <input type="date" id="filter-date" />
+
+    <!-- Input untuk filter berdasarkan Absensi Sahitak -->
+    <label for="filter-absensi">Filter Absensi Sahitak:</label>
+    <input type="text" id="filter-absensi" placeholder="Cari Absensi Sahitak..." />
+
+    <table id="example" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Timestamp</th>
+                <th>NIA</th>
+                <th>Nama</th>
+                <th>Kelas</th>
+                <th>Absensi Sahitak</th>
+                <th>Kotak Ke</th>
+                <th>Sahiman</th>
+                <th>Kualitas Hafalan</th>
+                <th>Penguji</th>
+                <th>Waktu</th>
+            </tr>
+        </thead>
+        <tfoot>
+            <tr>
+                <th>Id</th>
+                <th>Timestamp</th>
+                <th>NIA</th>
+                <th>Nama</th>
+                <th>Kelas</th>
+                <th>Absensi Sahitak</th>
+                <th>Kotak Ke</th>
+                <th>Sahiman</th>
+                <th>Kualitas Hafalan</th>
+                <th>Penguji</th>
+                <th>Waktu</th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <script>
+        $(document).ready(function () {
+            const googleSheetsUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSUAzUF--2hzqrWOW5i5pxHdjkQPYlW2EcYzeOAbO85tDoUz3qiyHEi5_DokAAz_QricCCURJLGfG36/pub?output=csv";
+
+            fetch(googleSheetsUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Gagal memuat data");
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    const csvData = Papa.parse(data, { header: true });
+
+                    // Memformat kolom Timestamp menjadi YYYY-MM-DD
+                    csvData.data.forEach(row => {
+                        if (row.Timestamp) {
+                            const dateParts = row.Timestamp.split(" ")[0].split("/");
+                            const formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`; // Mengubah menjadi YYYY-MM-DD
+                            row.Timestamp = formattedDate;
+                        }
+                    });
+
+                    // Debugging: Melihat data yang telah diformat
+                    console.log("Data setelah pemformatan Timestamp:", csvData.data);
+
+                    const table = $('#example').DataTable({
+                        data: csvData.data,
+                        columns: [
+                            { data: "Id" },
+                            { data: "Timestamp" },
+                            { data: "NIA" },
+                            { data: "Nama" },
+                            { data: "Kelas" },
+                            { data: "AbsensiSahitak" },
+                            { data: "KotakKe" },
+                            { data: "Sahiman" },
+                            { data: "KualitasHafalan" },
+                            { data: "Penguji" },
+                            { data: "Waktu" }
+                        ],
+                        dom: 'Bfrtip',
+                        buttons: [
+                            {
+                                extend: 'excelHtml5',
+                                text: 'Ekspor ke Excel',
+                                title: 'Data Export'
+                            }
+                        ]
+                    });
+
+                    // Filter berdasarkan tanggal (Timestamp)
+                    $('#filter-date').on('change', function () {
+                        const selectedDate = $(this).val();
+                        if (selectedDate) {
+                            // Filter data berdasarkan tanggal pada kolom Timestamp
+                            table.column(1).search(selectedDate).draw();
+                        } else {
+                            table.column(1).search('').draw();  // Reset filter jika tanggal tidak dipilih
+                        }
+                    });
+
+                    // Filter berdasarkan Absensi Sahitak
+                    $('#filter-absensi').on('keyup', function () {
+                        const absensiValue = $(this).val();
+                        if (absensiValue) {
+                            // Filter data berdasarkan Absensi Sahitak
+                            table.column(5).search(absensiValue).draw();
+                        } else {
+                            table.column(5).search('').draw();  // Reset filter jika tidak ada input
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("Gagal memuat data dari Google Sheets.");
+                });
+        });
+    </script>
+</body>
+</html>
 
