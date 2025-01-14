@@ -31,22 +31,20 @@
 
     <script>
         $(document).ready(function () {
-            // URL Google Spreadsheet dalam format CSV
             const googleSheetsUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSUAzUF--2hzqrWOW5i5pxHdjkQPYlW2EcYzeOAbO85tDoUz3qiyHEi5_DokAAz_QricCCURJLGfG36/pub?output=csv";
 
-            // Menggunakan Fetch API untuk mengambil data dan menangani redirect
             fetch(googleSheetsUrl)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error("Failed to fetch data");
                     }
-                    return response.text(); // Mendapatkan data CSV sebagai teks
+                    return response.text();
                 })
                 .then(data => {
                     const csvData = Papa.parse(data, { header: true });
-                    console.log("Data from Google Sheets:", csvData.data); // Debugging: Periksa data di konsol
+                    console.log("CSV Headers:", csvData.meta.fields);  // Log headers to verify
 
-                    // Inisialisasi DataTable
+                    // Inisialisasi DataTable dengan nama kolom yang benar
                     $('#example').DataTable({
                         data: csvData.data,
                         columns: [
@@ -55,10 +53,10 @@
                             { data: "NIA" },
                             { data: "Nama" },
                             { data: "Kelas" },
-                            { data: "Absensi Sahitak" },
-                            { data: "Kotak Ke" },
+                            { data: "AbsensiSahitak" },  // Correct column name
+                            { data: "KotakKe" },         // Correct column name
                             { data: "Sahiman" },
-                            { data: "Kualitas Hafalan" },
+                            { data: "KualitasHafalan" }, // Correct column name
                             { data: "Penguji" },
                             { data: "Waktu" }
                         ]
