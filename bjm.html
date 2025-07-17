@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CTN Product Table</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    table { width: 100%; }
+    th, td { white-space: nowrap; }
+  </style>
+</head>
+<body>
+
+<h2>📦 CTN Product Table</h2>
+
+<table id="furnitureTable" class="display nowrap">
+  <thead>
+    <tr>
+      <th>CTN PRICE</th>
+      <th>ITEM NO</th>
+      <th>DESCRIPTION</th>
+      <th>COMPONENT</th>
+      <th>Color</th>
+      <th>MARKING (W)</th>
+      <th>MARKING (D)</th>
+      <th>MARKING (H)</th>
+      <th>UKURAN LUAR (W)</th>
+      <th>UKURAN LUAR (D)</th>
+      <th>UKURAN LUAR (H)</th>
+      <th>NW (LBS)</th>
+      <th>MARKING (LBS)</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+
+<script>
+const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS971GTcHdugkiPfEPN_NtWNxz_R9zPfLK1_MyeV_yO-Vlv8MBlHXdXLLEyqoZAXw02cnWFlGx8WrYH/pub?output=csv';
+
+function parseCsvManually(text) {
+  const rows = text.trim().split('\n').map(line => {
+    const cells = [];
+    let current = '', insideQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"' && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else if (char === '"') {
+        insideQuotes = !insideQuotes;
+      } else if (char === ',' && !insideQuotes) {
+        cells.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    cells.push(current.trim());
+    return cells;
+  });
+  return rows;
+}
+
+fetch(csvUrl)
+  .then(res => res.text())
+  .then(csv => {
+    const rows = parseCsvManually(csv);
+    rows.shift(); // hapus baris header CSV
+
+    const tbody = document.getElementById('tableBody');
+    rows.forEach(row => {
+      while (row.length < 13) row.push('');
+      const tr = document.createElement('tr');
+      row.slice(0, 13).forEach(cell => {
+        const td = document.createElement('td');
+        td.textContent = cell;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+
+    $('#furnitureTable').DataTable({
+      responsive: true,
+      dom: 'Bfrtip',
+      buttons: ['copy', 'excel', 'pdf', 'print', 'colvis']
+    });
+  });
+</script>
+
+</body>
+</html>
