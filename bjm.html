@@ -53,41 +53,40 @@
 <script>
 const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS971GTcHdugkiPfEPN_NtWNxz_R9zPfLK1_MyeV_yO-Vlv8MBlHXdXLLEyqoZAXw02cnWFlGx8WrYH/pub?output=csv';
 
-function parseCsvManually(text) {
-  const rows = text.trim().split('\n').map(line => {
-    const cells = [];
-    let current = '', insideQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      if (char === '"' && line[i + 1] === '"') {
-        current += '"';
-        i++;
-      } else if (char === '"') {
-        insideQuotes = !insideQuotes;
-      } else if (char === ',' && !insideQuotes) {
-        cells.push(current.trim());
-        current = '';
-      } else {
-        current += char;
+function parseCsvSafe(csvText) {
+  const lines = csvText.trim().split('\n');
+  const data = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const raw = lines[i].trim();
+    const regex = /("([^"]|"")*"|[^",]*)(,|$)/g;
+    const row = [];
+    let match;
+
+    while ((match = regex.exec(raw)) !== null) {
+      let cell = match[1].trim();
+      if (cell.startsWith('"') && cell.endsWith('"')) {
+        cell = cell.slice(1, -1).replace(/""/g, '"');
       }
+      row.push(cell);
     }
-    cells.push(current.trim());
-    return cells;
-  });
-  return rows;
+
+    if (row.length === 13) {
+      data.push(row);
+    }
+  }
+
+  return data;
 }
 
 fetch(csvUrl)
   .then(res => res.text())
   .then(csv => {
-    const rows = parseCsvManually(csv);
-    rows.shift(); // hapus baris header CSV
-
+    const rows = parseCsvSafe(csv);
     const tbody = document.getElementById('tableBody');
     rows.forEach(row => {
-      while (row.length < 13) row.push('');
       const tr = document.createElement('tr');
-      row.slice(0, 13).forEach(cell => {
+      row.forEach(cell => {
         const td = document.createElement('td');
         td.textContent = cell;
         tr.appendChild(td);
