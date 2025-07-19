@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rattan Furniture Finder</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+    }
+    input {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+    }
+    th {
+      background: #f2f2f2;
+      position: sticky;
+      top: 0;
+    }
+    tr:hover {
+      background-color: #f9f9f9;
+    }
+    .table-container {
+      max-height: 75vh;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 Rattan Furniture Finder</h1>
+  <input type="text" id="search" placeholder="Search by any field..." />
+
+  <div class="table-container">
+    <table id="dataTable">
+      <thead id="tableHead"></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/1rhwEqzgBodUyYWT3HW5JfHYYTo5XeTaZSohz5ZDx9xM/export?format=csv";
+
+    let allData = [];
+
+    fetch(SHEET_URL)
+      .then(res => res.text())
+      .then(csv => {
+        const rows = csv.split("\n").map(r => r.split(","));
+        const headers = rows[0];
+        const dataRows = rows.slice(1);
+
+        allData = dataRows.map(row =>
+          Object.fromEntries(row.map((val, i) => [headers[i], val]))
+        );
+
+        renderTable(allData, headers);
+      });
+
+    function renderTable(data, headers) {
+      const thead = document.getElementById("tableHead");
+      const tbody = document.getElementById("tableBody");
+
+      // Header
+      thead.innerHTML = "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+
+      // Body
+      tbody.innerHTML = data.map(row => {
+        return "<tr>" + headers.map(h => `<td>${row[h] || ""}</td>`).join("") + "</tr>";
+      }).join("");
+    }
+
+    document.getElementById("search").addEventListener("input", (e) => {
+      const keyword = e.target.value.toLowerCase();
+      const filtered = allData.filter(row =>
+        Object.values(row).some(val =>
+          val.toLowerCase().includes(keyword)
+        )
+      );
+      renderTable(filtered, Object.keys(allData[0]));
+    });
+  </script>
+</body>
+</html>
