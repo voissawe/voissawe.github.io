@@ -1,108 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Rattan Furniture Finder</title>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://unpkg.com/tabletop@1.6.0/tabletop.js"></script>
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-    }
-    input {
-      width: 100%;
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-      font-size: 1rem;
-    }
-    .table-container {
-      max-height: 80vh;
-      overflow: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 6px;
-      text-align: left;
-      vertical-align: top;
-    }
-    th {
-      background-color: #f2f2f2;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-    tr:hover {
-      background-color: #f9f9f9;
-    }
+    body { font-family: sans-serif; padding: 20px; }
+    input { width: 100%; padding: 10px; margin-bottom: 10px; }
+    table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; vertical-align: top; }
+    th { background: #f0f0f0; position: sticky; top: 0; }
+    tr:hover { background: #fafafa; }
+    .table-container { max-height: 80vh; overflow: auto; }
   </style>
 </head>
 <body>
 
-  <h1>🔍 Rattan Furniture Finder</h1>
-  <input type="text" id="search" placeholder="Search by any field..." />
+<h1>🔍 Rattan Furniture Finder</h1>
+<input type="text" id="search" placeholder="Cari produk, warna, ukuran...">
+<div class="table-container">
+  <table id="dataTable">
+    <thead id="tableHead"></thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
 
-  <div class="table-container">
-    <table id="dataTable">
-      <thead id="tableHead"></thead>
-      <tbody id="tableBody"></tbody>
-    </table>
-  </div>
+<script>
+  const sheetID = "1rhwEqzgBodUyYWT3HW5JfHYYTo5XeTaZSohz5ZDx9xM";
+  let allData = [];
 
-  <script>
-    const SHEET_URL = "https://docs.google.com/spreadsheets/d/1rhwEqzgBodUyYWT3HW5JfHYYTo5XeTaZSohz5ZDx9xM/export?format=csv";
-
-    let allData = [];
-    let headers = [];
-
-    fetch(SHEET_URL)
-      .then(res => res.text())
-      .then(csv => {
-        const result = Papa.parse(csv, { header: true, skipEmptyLines: true });
-        allData = result.data.map(row => {
-          // Gabungkan kolom MARKING
-          row["MARKING (cm)"] = `${row["MARKING (W)"] || ""} x ${row["MARKING (D)"] || ""} x ${row["MARKING (H)"] || ""}`;
-          // Gabungkan kolom UKURAN LUAR
-          row["UKURAN LUAR (cm)"] = `${row["UKURAN LUAR (W)"] || ""} x ${row["UKURAN LUAR (D)"] || ""} x ${row["UKURAN LUAR (H)"] || ""}`;
-          return row;
-        });
-
-        headers = result.meta.fields.filter(h =>
-          !["MARKING (W)", "MARKING (D)", "MARKING (H)", "UKURAN LUAR (W)", "UKURAN LUAR (D)", "UKURAN LUAR (H)"].includes(h)
-        );
-
-        headers.push("MARKING (cm)", "UKURAN LUAR (cm)");
-
-        renderTable(allData);
+  Tabletop.init({
+    key: sheetID,
+    simpleSheet: true,
+    callback: function(data) {
+      allData = data.map(row => {
+        row["MARKING (cm)"] = `${row["MARKING (W)"]} x ${row["MARKING (D)"]} x ${row["MARKING (H)"]}`;
+        row["UKURAN LUAR (cm)"] = `${row["UKURAN LUAR (W)"]} x ${row["UKURAN LUAR (D)"]} x ${row["UKURAN LUAR (H)"]}`;
+        return row;
       });
 
-    function renderTable(data) {
-      const thead = document.getElementById("tableHead");
-      const tbody = document.getElementById("tableBody");
-
-      thead.innerHTML = "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
-
-      tbody.innerHTML = data.map(row =>
-        "<tr>" + headers.map(h => `<td>${(row[h] || "").replaceAll('"', '').replaceAll('\n', '<br>')}</td>`).join("") + "</tr>"
-      ).join("");
+      const headers = Object.keys(allData[0]).filter(h => !["MARKING (W)", "MARKING (D)", "MARKING (H)", "UKURAN LUAR (W)", "UKURAN LUAR (D)", "UKURAN LUAR (H)"].includes(h));
+      headers.push("MARKING (cm)", "UKURAN LUAR (cm)");
+      renderTable(allData, headers);
     }
+  });
 
-    document.getElementById("search").addEventListener("input", function () {
-      const keyword = this.value.toLowerCase();
-      const filtered = allData.filter(row =>
-        headers.some(h =>
-          (row[h] || "").toLowerCase().includes(keyword)
-        )
-      );
-      renderTable(filtered);
-    });
-  </script>
+  function renderTable(data, headers) {
+    document.getElementById("tableHead").innerHTML =
+      "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+
+    document.getElementById("tableBody").innerHTML = data.map(row =>
+      "<tr>" + headers.map(h => `<td>${row[h] || ""}</td>`).join("") + "</tr>`
+    ).join("");
+  }
+
+  document.getElementById("search").addEventListener("input", function () {
+    const keyword = this.value.toLowerCase();
+    const filtered = allData.filter(row =>
+      Object.values(row).some(val => (val || "").toLowerCase().includes(keyword))
+    );
+    const headers = Object.keys(filtered[0] || {});
+    renderTable(filtered, headers);
+  });
+</script>
 
 </body>
 </html>
-
