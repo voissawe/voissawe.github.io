@@ -1,1 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rattan Furniture Finder</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+    }
+    input {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    .table-container {
+      max-height: 80vh;
+      overflow: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background-color: #f2f2f2;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tr:hover {
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🔍 Rattan Furniture Finder</h1>
+  <input type="text" id="search" placeholder="Search by any field..." />
+
+  <div class="table-container">
+    <table id="dataTable">
+      <thead id="tableHead"></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/1rhwEqzgBodUyYWT3HW5JfHYYTo5XeTaZSohz5ZDx9xM/export?format=csv";
+    let allData = [];
+    let headers = [];
+
+    fetch(SHEET_URL)
+      .then(res => res.text())
+      .then(csv => {
+        const result = Papa.parse(csv, { header: true, skipEmptyLines: true });
+        allData = result.data;
+        headers = result.meta.fields;
+        renderTable(allData);
+      });
+
+    function renderTable(data) {
+      const thead = document.getElementById("tableHead");
+      const tbody = document.getElementById("tableBody");
+
+      // Header
+      thead.innerHTML = "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+
+      // Body
+      tbody.innerHTML = data.map(row => {
+        return "<tr>" + headers.map(h => `<td>${(row[h] || "").replaceAll('"', '').replaceAll('\n', '<br>')}</td>`).join("") + "</tr>";
+      }).join("");
+    }
+
+    document.getElementById("search").addEventListener("input", function () {
+      const keyword = this.value.toLowerCase();
+      const filtered = allData.filter(row =>
+        headers.some(h =>
+          (row[h] || "").toLowerCase().includes(keyword)
+        )
+      );
+      renderTable(filtered);
+    });
+  </script>
+
+</body>
+</html>
 
