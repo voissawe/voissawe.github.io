@@ -8,7 +8,7 @@
   <style>
     body {
       font-family: sans-serif;
-      padding: 2rem;
+      padding: 1rem;
       max-width: 100%;
       box-sizing: border-box;
     }
@@ -19,12 +19,11 @@
       font-size: 1rem;
     }
     .table-container {
-      max-width: 100%;
       overflow-x: auto;
     }
     table {
       width: 100%;
-      min-width: 800px;
+      min-width: 900px;
       border-collapse: collapse;
       font-size: 0.85rem;
     }
@@ -44,7 +43,6 @@
       background-color: #f9f9f9;
     }
 
-    /* Responsive switch */
     .desktop-only { display: block; }
     .mobile-only { display: none; }
 
@@ -54,7 +52,6 @@
       .hide-mobile { display: none; }
     }
 
-    /* Mobile card styling */
     .card {
       border: 1px solid #ddd;
       border-radius: 8px;
@@ -64,12 +61,29 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     .card h3 {
-      margin: 0 0 4px;
+      margin: 0 0 6px;
       font-size: 1.1rem;
     }
     .card p {
       margin: 2px 0;
       font-size: 0.9rem;
+    }
+    .details {
+      display: none;
+      margin-top: 6px;
+    }
+    .show .details {
+      display: block;
+    }
+    .toggle-btn {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      margin-top: 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
     }
   </style>
 </head>
@@ -79,11 +93,13 @@
   <input type="text" id="search" placeholder="Search by any field..." />
 
   <div class="table-container">
+    <!-- DESKTOP -->
     <table id="dataTable" class="desktop-only">
       <thead id="tableHead"></thead>
       <tbody id="tableBody"></tbody>
     </table>
 
+    <!-- MOBILE -->
     <div id="mobileList" class="mobile-only"></div>
   </div>
 
@@ -96,7 +112,7 @@
       .then(res => res.text())
       .then(csv => {
         const result = Papa.parse(csv, { header: true, skipEmptyLines: true });
-        
+
         allData = result.data.map(row => {
           row["MARKING (cm)"] = `${row["MARKING (W)"] || ""} x ${row["MARKING (D)"] || ""} x ${row["MARKING (H)"] || ""}`;
           row["UKURAN LUAR (cm)"] = `${row["UKURAN LUAR (W)"] || ""} x ${row["UKURAN LUAR (D)"] || ""} x ${row["UKURAN LUAR (H)"] || ""}`;
@@ -117,7 +133,7 @@
       const tbody = document.getElementById("tableBody");
       const mobileList = document.getElementById("mobileList");
 
-      // TABEL MODE (desktop)
+      // TABEL DESKTOP
       thead.innerHTML = "<tr>" + headers.map(h => {
         const hide = ["Color", "NW", "MARKING (cm)"].includes(h) ? ' class="hide-mobile"' : "";
         return `<th${hide}>${h}</th>`;
@@ -130,17 +146,26 @@
         }).join("") + "</tr>"
       ).join("");
 
-      // MOBILE MODE (card list)
-      mobileList.innerHTML = data.map(row => `
-        <div class="card">
+      // KARTU MOBILE
+      mobileList.innerHTML = data.map((row, i) => `
+        <div class="card" id="card-${i}">
           <h3>${row["DESCRIPTION"] || "Tanpa nama"}</h3>
           <p><strong>Item No:</strong> ${row["ITEM NO"] || "-"}</p>
           <p><strong>Harga:</strong> ${row["CTN PRICE"] || "-"}</p>
-          <p><strong>Marking:</strong> ${row["MARKING (cm)"] || "-"}</p>
-          <p><strong>Ukuran:</strong> ${row["UKURAN LUAR (cm)"] || "-"}</p>
-          ${row["Color"] ? `<p><strong>Warna:</strong> ${row["Color"]}</p>` : ""}
+          <button class="toggle-btn" onclick="toggleDetails(${i})">Buka</button>
+          <div class="details">
+            <p><strong>Marking:</strong> ${row["MARKING (cm)"] || "-"}</p>
+            <p><strong>Ukuran:</strong> ${row["UKURAN LUAR (cm)"] || "-"}</p>
+            ${row["Color"] ? `<p><strong>Warna:</strong> ${row["Color"]}</p>` : ""}
+            ${row["COMPONENT"] ? `<p><strong>Component:</strong> ${row["COMPONENT"]}</p>` : ""}
+          </div>
         </div>
       `).join("");
+    }
+
+    function toggleDetails(id) {
+      const card = document.getElementById(`card-${id}`);
+      card.classList.toggle("show");
     }
 
     document.getElementById("search").addEventListener("input", function () {
@@ -156,4 +181,3 @@
 
 </body>
 </html>
-
